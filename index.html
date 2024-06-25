@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .first {
+            text-shadow: 1px 1px 1px #000;
+        }
+        .second {
+            text-shadow: -1px 0 #000, 0 1px #000, 1px 0 #000, 0 -1px #000;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            overflow: hidden;
+            padding: 0 20px; /* 좌우 패딩 추가 */
+            box-sizing: border-box; /* 패딩이 포함되도록 설정 */
+        } 
+        .quiz-container,
+        .cover-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            transition: opacity 0.5s ease; /* 페이드 효과를 위해 추가 */
+            box-sizing: border-box; /* 패딩이 포함되도록 설정 */
+        }
+        .cover-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            /*text-align: center;*/ /* 텍스트 가운데 정렬 */
+        }
+        .cover-background,
+        .quiz-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 1; /* 이미지 투명도 설정 */
+            z-index: -1;
+            transition: opacity 100s ease;
+        }
+        .cover-container h1,
+        .quiz-container h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .cover-container .start-button,
+        .quiz-container button {
+            background: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .cover-container .start-button:hover,
+        .quiz-container button:hover {
+            background: #0056b3;
+        }
+        .quiz-container .question,
+        .quiz-container .feedback,
+        .quiz-container .hint {
+            margin-bottom: 10px;
+            /*text-align: center;*/ /* 텍스트 가운데 정렬 */
+        }
+        .quiz-container .question img,
+        .quiz-container .feedback img,
+        .quiz-container .hint img {
+            max-width: 50%;
+            height: auto;
+            margin-bottom: 10px;
+            margin: auto;
+            display: block;
+            border-radius: 15px; /* 이미지 테두리를 둥글게 만듭니다 */
+        }
+        .quiz-container .answers {
+            list-style: none;
+            padding: 0;
+        }
+        .quiz-container .answers li {
+            margin-bottom: 10px;
+        }
+        .quiz-container .result {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        .quiz-container .progress {
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        .hidden {
+            display: none;
+        }
+        .hint-toggle {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .hint-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .hint-content.hidden {
+            max-height: 0;
+        }
+        .hint-content.visible {
+            max-height: 1000px; /* Adjust this value as needed */
+        }
+        .feedback-container.correct {
+            background: rgba(0, 255, 0, 0.01);
+        }
+        .feedback-container.incorrect {
+            background: rgba(255, 0, 0, 0.01);
+        }
+        .feedback-container {
+            max-width: 600px; /* 예시로 설정한 최대 너비 */
+            padding: 20px; /* 필요에 따라 여백을 조정하세요 */
+            text-align: center;
+            /* 그 외의 스타일링 */
+        }
+        .feedback-container img {
+            max-width: 100%; /* 이미지의 최대 너비를 부모 요소에 맞게 설정 */
+            height: auto; /* 높이를 자동으로 조정하여 비율 유지 */
+            display: block; /* 이미지가 블록 요소처럼 표시되도록 설정 */
+            margin: 0 auto; /* 이미지를 가운데 정렬 */
+            max-height: 70vh; /* 이미지의 최대 높이를 70vh로 설정 */
+            border-radius: 15px; /* 이미지 테두리를 둥글게 만듭니다 */
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5); /* 흐린 효과 */
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .fade-out {
+            animation: fadeOut 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="cover-container" id="cover-container">
+            <div class="cover-background" id="cover-background" style="background-image: url('https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg');"></div>
+            <h1>Welcome to the Quiz</h1>
+            <button class="start-button" id="start-button">Start</button>
+        </div>
+
+        <div class="quiz-container hidden" id="quiz-container">
+            <div class="quiz-background" id="quiz-background"></div>
+            <h1>Review Quiz</h1>
+            <div id="quiz">
+                <div class="progress" id="progress"></div>
+                <div class="question-container">
+                    <div class="question"></div>
+                    <div class="hint-toggle hidden" id="hint-toggle">Show Hint</div>
+                    <div class="hint-content hidden" id="hint-content"></div>
+                    <ul class="answers"></ul>
+                    <button id="submit">Submit</button>
+                </div>
+                <div class="feedback-container hidden">
+                    <div class="feedback"></div>
+                    <button id="next" class="hidden">Next Question</button>
+                    <button id="try-again" class="hidden">Try Again</button>
+                </div>
+                <div class="result hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                question: "<h3><b>다음 문자의 의미는 무엇일까요?</b></h3>",
+                image: "https://cms-imgp.jw-cdn.org/img/p/2008567/univ/art/2008567_univ_lsr_xl.jpg",
+                a: "알렉스",
+                b: "바알",
+                c: "여호와",
+                d: "제우스",
+                e: "하느님",
+                correct: "c",
+                correctExplanation: "<h2 class=first><b>여호와</b>.</h2><p class=first>여호와는 하느님의 이름 즉 [테트라그람마톤]이라고 알려져 있는 히브리어 네 글자 를 한국어로 표기한 거야.</p><p class=first>고대 히브리어로 하느님의 이름을 정확히 어떻게 발음했는지는 알려져 있지는 않지. 하지만 한국어로 \"<b>여호와</b>\"라는 이름은 오랫동안 사용되어 왔어.</p>",
+                correctBackground: "https://cms-imgp.jw-cdn.org/img/p/502012489/univ/art/502012489_univ_lsr_lg.jpg",
+                feedbackImage: "https://cms-imgp.jw-cdn.org/img/p/502012489/univ/art/502012489_univ_lsr_lg.jpg",
+                incorrectExplanations: {
+                    a: { text: "알렉스는 너의 이름이잖아 바보야!", image: "alex.png", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    b: { text: "바알은 가나안의 거짓 신의 이름이야.", image: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/rr/2019/101", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    d: { text: "제우스는 그리스 신화에 나오는 천둥의 신 이름이야.", image: "https://i.namu.wiki/i/hLM5i-H0FVyuZcjY6gvgif2Sq9bmjcNuoLq_w2V64ee_sSqt9x2QX9EjvdDp_uAP3a5mwGlLNT1yyNfK7AeScA.webp", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    e: { text: "아쉽지만 아니야. 사진에 나오는 건 이름이지 칭호가 아니야.", image: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/w13/2013/1651", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" }
+                },
+                hint: { text: "이건 우리가 반드시 알아야 할 <b><u>이름</u></b>이야.", image: "" },
+                questionBackground: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg"
+            },
+            {
+                question: "<h3><b><i>'여호와'</i>라는 이름의 의미는 무엇일까요?</b></h3>",
+                image: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/g/2017/464",
+                a: "구원하신다",
+                b: "되게하신다",
+                c: "사랑이시다",
+                d: "멋지시다",
+                e: "뛰어나시다",
+                correct: "b",
+                correctExplanation: "<h2 class=first><b>되게 하신다</b>.</h2><p class=first>이 이름은 '되다'를 의미하는 히브리어 동사에서 파생되었고, 일부 학자들은 그 이름이 '그분은 되게 하신다'를 의미한다고 해.</p><p class=first>그러한 정의는 창조주이자 목적을 이루시는 분인 여호와께 잘 들어맞아! (이사야 55:10,11)</p>",
+                correctBackground: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/ijwbq/2023/984",
+                feedbackImage: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/ijwbq/2023/984",
+                incorrectExplanations: {
+                    a: { text: "아쉽지만 아니야. 좀 더 생각해 봐!", image: "https://img2.daumcdn.net/thumb/R658x0.q70/?fname=https://t1.daumcdn.net/news/202105/24/wngproject/20210524030952302kvps.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    c: { text: "여호와께선 사랑이시지만, 이름의 의미는 아니야.", image: "https://flexible.img.hani.co.kr/flexible/normal/800/590/imgdb/original/2024/0612/20240612500343.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    d: { text: "아니지롱~", image: "https://item.kakaocdn.net/do/6cadbd4a9e8123533d943c69dda202049f5287469802eca457586a25a096fd31", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    e: { text: "의미가 비슷해. 좀 더 생각해 봐!", image: "https://img2.daumcdn.net/thumb/R658x0.q70/?fname=https://t1.daumcdn.net/news/202105/24/wngproject/20210524030952302kvps.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" }
+                },
+                hint: { text: "출애굽기 3:15", image: "" },
+                questionBackground: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg"
+            },
+            {
+                question: "<h3><b>성경의 저자는 누구인가요?</b></h3>",
+                image: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/ijwbq/2023/1174",
+                a: "모세",
+                b: "바울",
+                c: "예수",
+                d: "여호와",
+                e: "다윗",
+                correct: "d",
+                correctExplanation: "<h2 class=first>성경의 저자-여호와 하느님</h2><p class=first>성서는 1600여년에 걸쳐 약 40명의 사람들에 의해 기록되었습니다. 대부분의 성서 필자들은 자신들이 한 분이신 참 하느님 여호와로부터 권위를 받아 기록했으며, 그분의 인도를 직접 받았다는 사실을 인정했습니다.</p>",
+                correctBackground: "https://cms-imgp.jw-cdn.org/img/p/502012485/univ/art/502012485_univ_lsr_lg.jpg",
+                feedbackImage: "https://cms-imgp.jw-cdn.org/img/p/502012485/univ/art/502012485_univ_lsr_lg.jpg",
+                incorrectExplanations: {
+                    a: { text: "창세기, 출애굽기, 레위기, 민수기, 신명기, 욥기를 기록하긴 했지만 저자는 아니야.", image: "https://cms-imgp.jw-cdn.org/img/p/102004242/univ/art/102004242_univ_lsr_lg.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    b: { text: "바울은 14권의 책이나 기록했지만, 저자는 아니야.", image: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/mwb19/2019/233", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    c: { text: "예수께서는 많은 일을 하셨지만 성경을 기록하지는 않으셨어.", image: "https://wol.jw.org/ko-cn/wol/mp/r862/lp-koc/ll/2017/74", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    e: { text: "다윗은 시편의 일부를 기록했지만, 저자는 아니야.", image: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/w22/2022/859", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" }
+                },
+                hint: { text: "사장과 비서의 비유를 기억해?", image: "" },
+                questionBackground: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg"
+            },
+            {
+                question: "<h3>성경에는 <b>'여호와'</b>라는 이름이 몇 번 나올까요?</h3>",
+                image: "",
+                a: "4000번",
+                b: "5000번",
+                c: "6000번",
+                d: "7000번",
+                e: "10000번",
+                correct: "d",
+                correctExplanation: "<h2 class=first>7216번 기록된 이름</h2><p class=first>이 이름은 성경에 약 7000번 나와. 이 이름은 '하느님', '전능자', '주'와 같은 그 어떤 칭호보다 성경에 더 많이 나오고, 아브라함, 모세, 다윗을 포함해 그 어떤 이름보다도 더 자주 나오지.</p>",
+                correctBackground: "https://cms-imgp.jw-cdn.org/img/p/502016190/univ/art/502016190_univ_lsr_lg.jpg",
+                feedbackImage: "https://cms-imgp.jw-cdn.org/img/p/502016190/univ/art/502016190_univ_lsr_lg.jpg",
+                incorrectExplanations: {
+                    a: { text: "더 생각해 봐!!!", image: "https://img2.daumcdn.net/thumb/R658x0.q70/?fname=https://t1.daumcdn.net/news/202105/24/wngproject/20210524030952302kvps.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    b: { text: "좀 더 생각해 봐!!", image: "https://img-store.theqoo.net/NFCIuA.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    c: { text: "아쉽네;; 좀 더 생각해.", image: "https://img.seoul.co.kr/img/upload/2022/01/26/SSI_20220126175549_O2.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    e: { text: "너무 많이 갔어...", image: "https://cdn.ppomppu.co.kr/zboard/data3/2019/0220/1550611080_8639_585860_421041_222.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" }
+                },
+                hint: { text: "성경에서 말하는 완전한 숫자가 들어가!", image: "" },
+                questionBackground: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg"
+            },
+            {
+                question: "<h3><b>창세기 1장의 내용을 통해 알 수 있는 점은 무엇인가요?</b></h3>",
+                image: "https://cms-imgp.jw-cdn.org/img/p/102015042/univ/art/102015042_univ_lsr_lg.jpg",
+                a: "창조",
+                b: "하느님 이름",
+                c: "예수",
+                d: "진화",
+                e: "사탄",
+                correct: "a",
+                correctExplanation: "<h2 class=first>창조의 기록</h2><p class=first>성경 창세기 1장은 지구와 지구에 있는 생명체들이 어떻게 생겨났는지 설명해 줘.</p><p class=first>여호와께서 지구를 만드신 다음 지구에 생명체를 창조하신 과정을 알려주지.</p>",
+                correctBackground: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/mwb20/2020/29",
+                feedbackImage: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/mwb20/2020/29",
+                incorrectExplanations: {
+                    b: { text: "1장에 여호와라는 이름은 나오지 않아.", image: "https://flexible.img.hani.co.kr/flexible/normal/970/580/imgdb/child/2024/0129/17064911312214_20240123502746.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    c: { text: "예수는 창세기에는 나오지 않아.", image: "https://jjalbang.today/files/jjalbox/2020/09/20200908_5f57713d4e572.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    d: { text: "진화는 성경의 가르침과 반대야!!", image: "https://img.animalplanet.co.kr/news/2019/11/07/700/jt2v590h58s0016316k3.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    e: { text: "사탄이 등장하는 건 3장부터야. 뱀을 이용해서 하와를 속이는 장면으로 말이야.", image: "https://cms-imgp.jw-cdn.org/img/p/102013204/univ/art/102013204_univ_lsr_lg.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" }
+                },
+                hint: { text: "첫째날에서 여섯째날을 기억해?", image: "" },
+                questionBackground: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg"
+            },
+            {
+                question: "<h2><b>'성령'이란 무엇인가요?</b></h2>",
+                image: "https://cms-imgp.jw-cdn.org/img/p/502014219/univ/art/502014219_univ_lsr_lg.jpg",
+                a: "하느님의 이름",
+                b: "인격체",
+                c: "예수의 능력",
+                d: "사람의 힘",
+                e: "하느님의 능력",
+                correct: "e",
+                correctExplanation: "<h2 class=first>여호와의 활동력</h2><p class=first>우리가 손을 사용해 일을 하는 것처럼 여호와께서는 자신의 성령을 사용하시지. 성경은 성령이 인격체가 아니라 하느님께서 일을 이루기 위해 사용하시는 힘이라고 알려줘.</p>",
+                correctBackground: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/lff/2021/227",
+                feedbackImage: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/lff/2021/227",
+                incorrectExplanations: {
+                    a: { text: "무슨 소리야! 넌 다시 배워야겠다!", image: "https://cdn.ppomppu.co.kr/zboard/data3/2021/0219/m_1613738593_8617_1585093180_9530_158493513339e71c1d144049b5884b6cd8925b2795__mn128191__w447__h446__f30148__Ym202003.png", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    b: { text: "그건 절대 아니야!!", image: "https://img.animalplanet.co.kr/news/2020/02/10/700/jwiy2807uxu8nv61e399.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    c: { text: "아쉽지만 아니야.", image: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/w21/2021/529", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    d: { text: "아니라고!!!", image: "https://item.kakaocdn.net/do/9d4a4d8368feb0ea31d42724f36156f541d1a2caccd0c566eab28b91e2e5d306", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" }
+                },
+                hint: { text: "손을 생각해!", image: "" },
+                questionBackground: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg"
+            },
+            {
+                question: "<h2><b>여호와의 '성품'과 가장 먼 것은?</b></h2>",
+                image: "https://cms-imgp.jw-cdn.org/img/p/1102010306/univ/art/1102010306_univ_cnt_1_md.jpg",
+                a: "사랑",
+                b: "분노",
+                c: "선함",
+                d: "자비",
+                e: "유머",
+                correct: "b",
+                correctExplanation: "<h2 class=first>분노하기를 더더하시는 분</h2><p class=first>여호와께서는 '분노하기를 더디'한다고, 다시 말해 쉽게 화를 터뜨리는 분이 아니셔. 오히려 잘못된 행동을 바로잡도록 시간을 주시면서 참을성을 보이시지</p>",
+                correctBackground: "https://cms-imgp.jw-cdn.org/img/p/202016288/univ/art/202016288_univ_cnt_4_xs.jpg",
+                feedbackImage: "https://cms-imgp.jw-cdn.org/img/p/202016288/univ/art/202016288_univ_cnt_4_xs.jpg",
+                incorrectExplanations: {
+                    a: { text: "여호와께서는 사랑 그 자체이신 분이야! 가장 먼저 나오는 성품이라고! 다시 생각해 봐.", image: "https://cms-imgp.jw-cdn.org/img/p/2024246/univ/art/2024246_univ_cnt_1_lg.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    c: { text: "여호와에게서 빼놓을 수 없는 것 중 하나가 선함이야!", image: "https://cms-imgp.jw-cdn.org/img/p/2019322/univ/wpub/2019322_univ_cnt_1_lg.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    d: { text: "여호와께서 얼마나 큰 자비를 보이셨는데! 대속 희생이 그 증거야.", image: "https://cms-imgp.jw-cdn.org/img/p/2021366/univ/art/2021366_univ_cnt_1_md.jpg", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    e: { text: "강아지가 꼬리를 물려고 빙빙 도는 모습에서 여호와의 유머 감각을 엿볼수 있어!", image: "https://image-notepet.akamaized.net/resize/620x-/seimage/20190517/97f0ad0f5ebfb9fe707973e84335ffad.png", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" }
+                },
+                hint: { text: "출애굽기 34:6", image: "" },
+                questionBackground: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg"
+            },
+            {
+                question: "<h1><b>누구를 통해 하느님께 '기도'해야 합니까?</b></h1>",
+                image: "",
+                a: "연구 사회자",
+                b: "예수",
+                c: "대통령",
+                d: "장로 형제",
+                e: "부모님",
+                correct: "b",
+                correctExplanation: "<h2 class=first>예수 그리스도 이름으로...</h2><p class=first>성경은 예수의 이름으로 여호와께 기도하라고 가르쳐 줘. (요한복음 16:23, 24을 읽어봐) 우리는 그렇게 기도해서, 우리가 여호와의 친구가 되도록 예수께서 하시는 역할에 대해 감사를 나타내게 되는 거지.</p>",
+                correctBackground: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/ijwbq/2023/438",
+                feedbackImage: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/ijwbq/2023/438",
+                incorrectExplanations: {
+                    a: { text: "나를 통해 하는 건 불가능해...", image: "https://item.kakaocdn.net/do/98382bb216b68ec235da0a0b66203692fba8e3d30017c7399e19e508ee32200a", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    c: { text: "대통령에게 말을 하기도 어렵고, 대통령도 불가능해.", image: "https://ogq-sticker-global-cdn-z01.afreecatv.com/sticker/176ecb02c537161/23.png", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    d: { text: "아니야! 그렇게 하면 안돼!", image: "https://ogq-sticker-global-cdn-z01.afreecatv.com/sticker/16f23c3b326196e/22.png", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    e: { text: "부모님에게 고민을 털어놓는 건 괜찮아. 하지만 부모님을 통해서는 불가능해!", image: "https://item.kakaocdn.net/do/e1d4b9f550a3216fd199f10b173ecc684022de826f725e10df604bf1b9725cfd", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" }
+                },
+                hint: { text: "항상 듣던 기도를 생각해 봐.", image: "" },
+                questionBackground: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg"
+            },
+            {
+                question: "<h1><b>'아멘'이라는 의미는 무엇인가요?</b></h1>",
+                image: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/ijwbq/2023/213",
+                a: "구원해 주소서",
+                b: "수고하셨습니다",
+                c: "사랑해 주소서",
+                d: "그렇게 되소서",
+                e: "안녕히 가세요",
+                correct: "d",
+                correctExplanation: "<h2 class=first>그렇게 되소서</h2><p class=first>'아멘'이라는 말은 '그렇게 되소서' 또는 '확실히'를 의미해. 성경 시대부터 '아멘'은 기도를 마치는 말로 사용되어 왔어.-역대기상 16:36</p><p class=first> </p>",
+                correctBackground: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/w19/2019/236",
+                feedbackImage: "https://wol.jw.org/ko/wol/mp/r8/lp-ko/w19/2019/236",
+                incorrectExplanations: {
+                    a: { text: "다시 한번 생각해 봐.", image: "https://i.pinimg.com/originals/25/06/bc/2506bcc115a0390217f3231a49bf32cc.gif", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    b: { text: "이건 집회 끝나고 형제 자매들에게 하는 말이고.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQt3LH4TeEc-1xyVukTf5JceguRB1EOy7uMyA&s", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    c: { text: "옛다 사랑~", image: "https://item.kakaocdn.net/do/e1ef31d40da0a201f5e6c296553974a47154249a3890514a43687a85e6b6cc82", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    e: { text: "헤어질 때 하는 말이잖아!", image: "https://item.kakaocdn.net/do/98ce3344be2c016fde2badb7e8433b5c8f324a0b9c48f77dbce3a43bd11ce785", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" }
+                },
+                hint: { text: "아멘을 언제 할까?", image: "" },
+                questionBackground: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg"
+            },
+            /*{
+                question: "<h1><b></b></h1>",
+                image: "",
+                a: "",
+                b: "",
+                c: "",
+                d: "",
+                e: "",
+                correct: "",
+                correctExplanation: "<h2 class=first> </h2><p class=first> </p><p class=first> </p>",
+                correctBackground: "",
+                feedbackImage: "",
+                incorrectExplanations: {
+                    : { text: "", image: "", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    : { text: "", image: "", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    : { text: "", image: "", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" },
+                    : { text: "", image: "", background: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg" }
+                },
+                hint: { text: "", image: "" },
+                questionBackground: "https://cms-imgp.jw-cdn.org/img/p/1102021352/univ/art/1102021352_univ_lsr_lg.jpg"
+            },*/
+        ];
+
+        let currentQuiz = 0;
+        let score = 0;
+
+        const coverContainer = document.getElementById('cover-container');
+        const startButton = document.getElementById('start-button');
+        const quizContainer = document.querySelector('.quiz-container');
+        const quizBackground = document.getElementById('quiz-background');
+        const questionContainer = document.querySelector('.question-container');
+        const feedbackContainer = document.querySelector('.feedback-container');
+        const questionElement = document.querySelector('.question');
+        const answerListElement = document.querySelector('.answers');
+        const feedbackElement = document.querySelector('.feedback');
+        const resultElement = document.querySelector('.result');
+        const progressElement = document.getElementById('progress');
+        const hintToggle = document.getElementById('hint-toggle');
+        const hintContent = document.getElementById('hint-content');
+        const submitButton = document.getElementById('submit');
+        const nextButton = document.getElementById('next');
+        const tryAgainButton = document.getElementById('try-again');
+
+        function loadQuiz() {
+            const currentQuizData = quizData[currentQuiz];
+            questionContainer.classList.add('hidden');
+            quizBackground.style.backgroundImage = `url(${currentQuizData.questionBackground})`;
+            questionElement.innerHTML = `<p>${currentQuizData.question}</p>`;
+            if (currentQuizData.image) {
+                questionElement.innerHTML += `<img src="${currentQuizData.image}" alt="Question Image">`;
+            }
+            answerListElement.innerHTML = '';
+            for (const key in currentQuizData) {
+                if (key === 'a' || key === 'b' || key === 'c' || key === 'd' || key === 'e') {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<input type="radio" name="answer" id="${key}" value="${key}">
+                                    <label for="${key}">${currentQuizData[key]}</label>`;
+                    answerListElement.appendChild(li);
+                }
+            }
+
+            if (currentQuizData.hint) {
+                hintToggle.classList.remove('hidden');
+                hintContent.innerHTML = '';
+                if (currentQuizData.hint.image) {
+                    hintContent.innerHTML += `<img src="${currentQuizData.hint.image}" alt="Hint Image">`;
+                }
+                hintContent.innerHTML += `<p>${currentQuizData.hint.text}</p>`;
+            } else {
+                hintToggle.classList.add('hidden');
+                hintContent.innerHTML = '';
+            }
+
+            hintContent.classList.add('hidden');
+            hintContent.classList.remove('visible');
+            hintToggle.textContent = 'Show Hint';
+            progressElement.textContent = `Question ${currentQuiz + 1} of ${quizData.length}`;
+            
+            setTimeout(() => {
+                questionContainer.classList.remove('hidden');
+                questionContainer.classList.add('fade-in');
+            }, 500);
+        }
+
+        function showFeedback(isCorrect, selectedAnswer) {
+            const currentQuizData = quizData[currentQuiz];
+            questionContainer.classList.add('fade-out');
+            setTimeout(() => {
+                questionContainer.classList.add('hidden');
+                feedbackContainer.classList.remove('hidden');
+                feedbackContainer.classList.toggle('correct', isCorrect);
+                feedbackContainer.classList.toggle('incorrect', !isCorrect);
+
+                feedbackElement.innerHTML = `<p>${isCorrect ? "<h4><b>정답이야 알렉스!</b></h4>" : "<h4><b>실망이야 알렉스...</b></h4>"}</p>`;
+                feedbackElement.innerHTML += `<p>${isCorrect ? currentQuizData.correctExplanation : currentQuizData.incorrectExplanations[selectedAnswer].text}</p>`;
+                if (isCorrect && currentQuizData.feedbackImage) {
+                    feedbackElement.innerHTML += `<img src="${currentQuizData.feedbackImage}" alt="Feedback Image" >`;
+                    quizBackground.style.backgroundImage = `url(${currentQuizData.correctBackground})`;
+                } else if (!isCorrect && currentQuizData.incorrectExplanations[selectedAnswer].image) {
+                    feedbackElement.innerHTML += `<img src="${currentQuizData.incorrectExplanations[selectedAnswer].image}" alt="Feedback Image">`;
+                    quizBackground.style.backgroundImage = `url(${currentQuizData.incorrectExplanations[selectedAnswer].background})`;
+                }
+
+                feedbackElement.classList.add('fade-in');
+                nextButton.classList.toggle('hidden', !isCorrect);
+                tryAgainButton.classList.toggle('hidden', isCorrect);
+            }, 500);
+        }
+
+        function getSelected() {
+            const answerEls = document.querySelectorAll('input[name="answer"]');
+            let selectedAnswer = null;
+            answerEls.forEach(answerEl => {
+                if (answerEl.checked) {
+                    selectedAnswer = answerEl.value;
+                }
+            });
+            return selectedAnswer;
+        }
+
+        submitButton.addEventListener('click', () => {
+            const answer = getSelected();
+            if (answer) {
+                const currentQuizData = quizData[currentQuiz];
+                if (answer === currentQuizData.correct) {
+                    score++;
+                    showFeedback(true, answer);
+                } else {
+                    showFeedback(false, answer);
+                }
+                submitButton.classList.add('hidden');
+            } else {
+                alert('Please select an answer!');
+            }
+        });
+
+        nextButton.addEventListener('click', () => {
+            currentQuiz++;
+            if (currentQuiz < quizData.length) {
+                questionContainer.classList.add('fade-out');
+                setTimeout(() => {
+                    questionContainer.classList.remove('hidden');
+                    feedbackContainer.classList.add('hidden');
+                    feedbackContainer.classList.remove('correct');
+                    feedbackContainer.classList.remove('incorrect');
+                    feedbackElement.classList.remove('fade-in');
+                    loadQuiz();
+                    submitButton.classList.remove('hidden');
+                }, 500);
+            } else {
+                feedbackContainer.classList.add('hidden');
+                resultElement.classList.remove('hidden');
+                resultElement.innerHTML = `<p>You scored ${score} out of ${quizData.length}</p>`;
+            }
+        });
+
+        tryAgainButton.addEventListener('click', () => {
+            feedbackContainer.classList.add('fade-out');
+            setTimeout(() => {
+                feedbackContainer.classList.add('hidden');
+                feedbackElement.classList.remove('fade-in');
+                questionContainer.classList.remove('hidden');
+                submitButton.classList.remove('hidden');
+                feedbackContainer.classList.remove('fade-out');
+            }, 500);
+        });
+
+        hintToggle.addEventListener('click', () => {
+            hintContent.classList.toggle('hidden');
+            hintContent.classList.toggle('visible');
+            hintToggle.textContent = hintContent.classList.contains('hidden') ? 'Show Hint' : 'Hide Hint';
+        });
+
+        startButton.addEventListener('click', () => {
+            coverContainer.classList.add('fade-out');
+            setTimeout(() => {
+                coverContainer.classList.add('hidden');
+                quizContainer.classList.remove('hidden');
+                quizContainer.classList.add('fade-in');
+                loadQuiz();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
